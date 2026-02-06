@@ -1,0 +1,11 @@
+# build artifacts
+*.o
+*.out
+*.exe
+*.a
+
+# MacOS
+.DS_Store
+
+# IDE
+.vscode/
