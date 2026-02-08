@@ -18,6 +18,8 @@ typedef struct {
 	osl_progress progress;
 	osl_impl *impls;
 	size_t impl_count;
+	size_t target_sample_count;
+	const char *output_prefix;
 } osl_benchmark;
 
 #define OSL_REGISTER(name, fn) {#name, fn }
