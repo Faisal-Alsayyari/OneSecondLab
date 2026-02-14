@@ -23,4 +23,16 @@ Instead of being progress-sampled (i.e, sample every 10 square roots), OSL is ti
 OSL is designed to be as lightweight as possible. Overhead timing from the benchmark itself is minimized.
 
 ### 4. Explicit Ownership
-Implementations are owned solely by the user 
+Implementations are owned by the user. OSL does not validate correctness, interact with algorithm output, or otherwise interpret results.
+
+# Limitations
+- OSL does not validate the correctness of algorithm outputs.
+
+# Future Features
+- Benchmarking by memory usage in addition to time
+- CPU utilization tracking
+- Pure CLI configuration
+
+# Case Studies
+TBD: my plan is to make a case study-style guide of using OSL for square roots or others. Maybe a blog post for each video of the series explaining how it's used. 
+
