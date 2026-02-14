@@ -32,7 +32,10 @@ Implementations are owned by the user. OSL does not validate correctness, intera
 - Benchmarking by memory usage in addition to time
 - CPU utilization tracking
 - Pure CLI configuration
+- More flags and options (i.e, GIF length, static image, automated TikZ export etc)
+- Possibly debugging options 
 
 # Case Studies
 TBD: my plan is to make a case study-style guide of using OSL for square roots or others. Maybe a blog post for each video of the series explaining how it's used. 
+
 
