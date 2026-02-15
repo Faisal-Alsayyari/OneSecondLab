@@ -30,6 +30,7 @@ typedef struct {
 	osl_impl *impls;
 	size_t impl_count;
 	size_t target_sample_count;
+    size_t seconds;
 } osl_benchmark;
 
 #define OSL_REGISTER(name, fn) {#name, fn }

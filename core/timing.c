@@ -12,16 +12,17 @@
 #define FILENAME_LENGTH (256)
 #define FPS (30)
 
-void osl_run(osl_benchmark *benchmark, double seconds);
+void osl_run(osl_benchmark *benchmark);
 void osl_run_individual(osl_benchmark *benchmark, osl_impl *implementation, double seconds);
 
-void osl_run(osl_benchmark *benchmark, double seconds) {
+void osl_run(osl_benchmark *benchmark) {
    
-	if (seconds >= MAX_TIME) {
+	if (benchmark->seconds >= MAX_TIME) {
 		printf("ERROR: for your sanity, the current maximum benchmark time supported is 30 seconds.\n");
-	}
+	    return;
+    }
 
-    printf("--- Benchmark Started ---");
+    printf("--- Benchmark Started ---\n");
 
    // This forces all .dat files to target 30 FPS.
    // In future versions we may allow the user to define FPS
@@ -31,7 +32,7 @@ void osl_run(osl_benchmark *benchmark, double seconds) {
     for (size_t i = 0; i < benchmark->impl_count; i++) {
 		void *ctx = benchmark->create_ctx();
         benchmark->ctx = ctx;
-        osl_run_individual(benchmark, &benchmark->impls[i], seconds);
+        osl_run_individual(benchmark, &benchmark->impls[i], (double)benchmark->seconds);
 	    benchmark->destroy_ctx(benchmark->ctx);
 
 	}
@@ -57,26 +58,30 @@ void osl_run_individual(osl_benchmark *benchmark, osl_impl *implementation, doub
 	}
 
 
-	struct timespec start, now;
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	struct timespec start;
+	struct timespec now;
+    struct timespec last;
 
-    // sidenote: elapsed is in units of seconds (s)
-    //           time_since_last write and target_write interval are
-    //           in units of nanoseconds (ns)
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    // All timing is in seconds.
 
     int datapoints_collected = 0;
     double elapsed = 0;
     double time_since_last_write = 0;
-    double target_write_interval = (seconds / benchmark->target_sample_count) * 1e9; 
+    double target_write_interval = (seconds / benchmark->target_sample_count); 
     while (elapsed < seconds) {
 	
 		implementation->func(benchmark->ctx);
 
         clock_gettime(CLOCK_MONOTONIC, &now);
-	    double elapsed = (now.tv_sec - start.tv_sec) +
-				         (now.tv_nsec - start.tv_nsec) / 1e9;
-        time_since_last_write += elapsed;
-		
+	    elapsed = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
+        
+        double delta = (now.tv_sec - last.tv_sec) + (now.tv_nsec - last.tv_nsec) / 1e9;
+
+        time_since_last_write += delta;
+		last = now;
+
         if (time_since_last_write >= target_write_interval) {
 
 			// file writing
