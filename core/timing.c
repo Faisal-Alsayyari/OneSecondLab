@@ -13,6 +13,7 @@
 #define FPS (30)
 
 void osl_run(osl_benchmark *benchmark);
+
 void osl_run_individual(osl_benchmark *benchmark, osl_impl *implementation, double seconds);
 
 void osl_run(osl_benchmark *benchmark) {
@@ -27,7 +28,7 @@ void osl_run(osl_benchmark *benchmark) {
    // This forces all .dat files to target 30 FPS.
    // In future versions we may allow the user to define FPS
 
-   benchmark->target_sample_count = FPS * seconds; 
+   benchmark->target_sample_count = FPS * benchmark->seconds; 
 
     for (size_t i = 0; i < benchmark->impl_count; i++) {
 		void *ctx = benchmark->create_ctx();
@@ -63,21 +64,24 @@ void osl_run_individual(osl_benchmark *benchmark, osl_impl *implementation, doub
     struct timespec last;
 
     clock_gettime(CLOCK_MONOTONIC, &start);
+    last = start;
 
-    // All timing is in seconds.
+    // All timing is in nanoseconds.
 
+    double seconds_ns = seconds * 1e9;
     int datapoints_collected = 0;
-    double elapsed = 0;
+    double elapsed_ns = 0;
     double time_since_last_write = 0;
-    double target_write_interval = (seconds / benchmark->target_sample_count); 
-    while (elapsed < seconds) {
-	
+    
+    double target_write_interval = (double)(seconds_ns / benchmark->target_sample_count); 
+    while (elapsed_ns < seconds_ns) {
+
 		implementation->func(benchmark->ctx);
 
         clock_gettime(CLOCK_MONOTONIC, &now);
-	    elapsed = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
+	    elapsed_ns = (double)(now.tv_sec - start.tv_sec) * 1e9 + (double)(now.tv_nsec - start.tv_nsec);
         
-        double delta = (now.tv_sec - last.tv_sec) + (now.tv_nsec - last.tv_nsec) / 1e9;
+        double delta = (double)(now.tv_sec - last.tv_sec) * 1e9 + (double)(now.tv_nsec - last.tv_nsec);
 
         time_since_last_write += delta;
 		last = now;
@@ -86,7 +90,7 @@ void osl_run_individual(osl_benchmark *benchmark, osl_impl *implementation, doub
 
 			// file writing
 			uint64_t progress = benchmark->progress(benchmark->ctx);
-	        fprintf(file, "%lu :: %.9f\n", progress, elapsed);	
+	        fprintf(file, "%lu :: %.9f\n", progress, (elapsed_ns / 1e9));	
 
             time_since_last_write = 0;
             datapoints_collected++;
