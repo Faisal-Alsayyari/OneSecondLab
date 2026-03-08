@@ -11,6 +11,7 @@
 #define MAX_TIME (30)
 #define FILENAME_LENGTH (256)
 #define FPS (30)
+#define GIF_LENGTH (10)
 
 void osl_run(osl_benchmark *benchmark);
 
@@ -27,8 +28,9 @@ void osl_run(osl_benchmark *benchmark) {
 
    // This forces all .dat files to target 30 FPS.
    // In future versions we may allow the user to define FPS
+   // It also assumes the final GIF length will be 10 seconds, but this can be changed in the editor
 
-   benchmark->target_sample_count = FPS * benchmark->seconds; 
+   benchmark->target_sample_count = FPS * GIF_LENGTH * benchmark->seconds; 
 
     for (size_t i = 0; i < benchmark->impl_count; i++) {
 		void *ctx = benchmark->create_ctx();
@@ -60,11 +62,11 @@ void osl_run_individual(osl_benchmark *benchmark, osl_impl *implementation, doub
 
 
 	struct timespec start;
-	struct timespec now;
-    struct timespec last;
+    struct timespec before;
+    struct timespec after;
 
     clock_gettime(CLOCK_MONOTONIC, &start);
-    last = start;
+    before = start;
 
     // All timing is in nanoseconds.
 
@@ -74,17 +76,18 @@ void osl_run_individual(osl_benchmark *benchmark, osl_impl *implementation, doub
     double time_since_last_write = 0;
     
     double target_write_interval = (double)(seconds_ns / benchmark->target_sample_count); 
-    while (elapsed_ns < seconds_ns) {
+    while (elapsed_ns <= seconds_ns) {
 
+        // time only the function call
+
+        clock_gettime(CLOCK_MONOTONIC, &before);
 		implementation->func(benchmark->ctx);
-
-        clock_gettime(CLOCK_MONOTONIC, &now);
-	    elapsed_ns = (double)(now.tv_sec - start.tv_sec) * 1e9 + (double)(now.tv_nsec - start.tv_nsec);
+        clock_gettime(CLOCK_MONOTONIC, &after);
         
-        double delta = (double)(now.tv_sec - last.tv_sec) * 1e9 + (double)(now.tv_nsec - last.tv_nsec);
+        elapsed_ns = (double)(after.tv_sec - start.tv_sec) * 1e9 + (double)(after.tv_nsec - start.tv_nsec);
+        double delta = (double)(after.tv_sec - before.tv_sec) * 1e9 + (double)(after.tv_nsec - before.tv_nsec);
 
         time_since_last_write += delta;
-		last = now;
 
         if (time_since_last_write >= target_write_interval) {
 
